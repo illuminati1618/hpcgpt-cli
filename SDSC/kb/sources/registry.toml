@@ -1,0 +1,1466 @@
+# sources/registry.toml — THE list of external documentation this KB depends on.
+#
+# Human-edited. `tools/ingest.py` reads it, mirrors every `mode = "mirror"` entry into
+# sources/<group>/<id>.md (with provenance frontmatter), and writes sources/lock.json + INDEX.md.
+# Full conventions: sources/README.md
+#
+# Per-source keys (anything set in [groups.<name>] is inherited):
+#   id        unique, kebab-case, prefixed with the group  (required)
+#   group     folder under sources/                         (required)
+#   title     human title                                   (required)
+#   mode      "mirror" (default) | "link" (catalogue only; consult online)
+#   status    "auto" (default: regenerate each run) | "fixed" (hand-repaired; never overwritten)
+#   kind      "github" | "gitlab" | "url"
+#   repo/ref  repository + branch/tag to track (resolved to a commit SHA in lock.json)
+#   prefix    path prefix inside the repo; `path` is appended
+#   format    "md" | "mdx" | "html"
+#   url       canonical human-readable page (for kind="url" also what is fetched)
+#   url_template  group-level; "{page}" = path without extension (or explicit `page`)
+#   link_base     prefix for root-relative links like "/docs/x"
+#   selector  CSS selector for the content root of HTML pages (default <main>)
+#   license   as declared upstream ("none declared" = local reference copy only; never commit the copy)
+#   note      one line shown in INDEX.md
+
+# =============================================================================== groups
+[groups.opencode-v1]
+title = "OpenCode V1 (opencode-ai 1.18.x) — what hpcgpt-cli/SDSC targets today"
+description = "Pinned to the latest V1 release tag. The SDSC deployment (agents/, skills/, TUI plugins, `provider`/`npm`/`options` config) is written against V1."
+kind = "github"
+repo = "anomalyco/opencode"
+ref = "v1.18.32"
+prefix = "packages/web/src/content/docs/"
+format = "mdx"
+url_template = "https://opencode.ai/docs/{page}"
+link_base = "https://opencode.ai"
+license = "MIT"
+
+[groups.opencode-v2]
+title = "OpenCode V2 (@opencode/cli 2.x, released 2026-09-11)"
+description = "V2 keeps V1 config/agents/skills working but REQUIRES porting plugins (new plugin API) and moves tui.json -> cli.json. Mirror the pages that matter for a future migration."
+kind = "github"
+repo = "anomalyco/opencode"
+ref = "v2.0.18"
+prefix = "services/www/src/docs/content/"
+format = "mdx"
+url_template = "https://opencode.ai/v2/docs/{page}"
+link_base = "https://opencode.ai"
+license = "MIT"
+
+[groups.agentskills]
+title = "Agent Skills open standard (agentskills.io)"
+description = "The SKILL.md format OpenCode, Claude Code and others implement. Served as Markdown with Mintlify components (<Card>), so normalised as MDX."
+kind = "url"
+format = "mdx"
+link_base = "https://agentskills.io"
+license = "Apache-2.0"
+
+[groups.expanse]
+title = "SDSC Expanse — official user documentation"
+description = "The SDSC user guide is the authority for partitions, charging and storage; training repos add worked examples."
+license = "none declared"
+
+[groups.slurm]
+title = "Slurm (SchedMD) — upstream reference"
+description = "Man pages change with the installed Slurm version; consult online (check `sinfo --version` on Expanse)."
+
+[groups.nrp]
+title = "National Research Platform (Nautilus) — user docs"
+description = "Source: gitlab.nrp-nautilus.io/prp/nrp-site (Starlight MDX). Tracks `main`; commit pinned per fetch in lock.json."
+kind = "gitlab"
+host = "https://gitlab.nrp-nautilus.io"
+repo = "prp/nrp-site"
+ref = "main"
+prefix = "src/content/docs/Documentation/userdocs/"
+url_template = "https://nrp.ai/documentation/userdocs/{page}/"
+link_base = "https://nrp.ai"
+license = "none declared"
+
+[groups.hpcgpt]
+title = "hpcGPT project, LLM providers and prior art"
+description = "Upstream repos, provider consoles and references the SDSC team cites (mostly link-only)."
+
+[groups.hpcenv]
+title = "Generic HPC software environments (modules, conda) — multi-site docs"
+description = "Upstream tool docs and other centers' guides used to write the site-agnostic hpc-modules and hpc-conda skills. Link-only; each note says why it was used."
+
+[groups.evals]
+title = "Evaluating agents and Agent Skills — papers and guides"
+description = "Sources behind evaluation/skill-evaluation-metrics.md. Link-only; each note says why it was used. Numbers flagged unverified there were seen only in abstracts or snippets."
+
+# =============================================================================== OpenCode V1
+[[source]]
+id = "opencode-v1-config"
+group = "opencode-v1"
+title = "Config (locations, precedence, OPENCODE_CONFIG / OPENCODE_CONFIG_DIR, {env:}/{file:})"
+path = "config.mdx"
+
+[[source]]
+id = "opencode-v1-agents"
+group = "opencode-v1"
+title = "Agents (primary/subagent, markdown agent files, permissions)"
+path = "agents.mdx"
+
+[[source]]
+id = "opencode-v1-skills"
+group = "opencode-v1"
+title = "Agent Skills (SKILL.md discovery + frontmatter rules)"
+path = "skills.mdx"
+
+[[source]]
+id = "opencode-v1-plugins"
+group = "opencode-v1"
+title = "Plugins (server plugins, hooks, custom tools)"
+path = "plugins.mdx"
+
+[[source]]
+id = "opencode-v1-tools"
+group = "opencode-v1"
+title = "Built-in tools"
+path = "tools.mdx"
+
+[[source]]
+id = "opencode-v1-custom-tools"
+group = "opencode-v1"
+title = "Custom tools"
+path = "custom-tools.mdx"
+
+[[source]]
+id = "opencode-v1-permissions"
+group = "opencode-v1"
+title = "Permissions"
+path = "permissions.mdx"
+
+[[source]]
+id = "opencode-v1-mcp-servers"
+group = "opencode-v1"
+title = "MCP servers"
+path = "mcp-servers.mdx"
+
+[[source]]
+id = "opencode-v1-commands"
+group = "opencode-v1"
+title = "Custom commands"
+path = "commands.mdx"
+
+[[source]]
+id = "opencode-v1-providers"
+group = "opencode-v1"
+title = "Providers (custom OpenAI-compatible providers)"
+path = "providers.mdx"
+
+[[source]]
+id = "opencode-v1-models"
+group = "opencode-v1"
+title = "Models"
+path = "models.mdx"
+
+[[source]]
+id = "opencode-v1-rules"
+group = "opencode-v1"
+title = "Rules (AGENTS.md instructions)"
+path = "rules.mdx"
+
+[[source]]
+id = "opencode-v1-cli"
+group = "opencode-v1"
+title = "CLI reference (opencode run, env vars)"
+path = "cli.mdx"
+
+[[source]]
+id = "opencode-v1-tui"
+group = "opencode-v1"
+title = "TUI (tui.json, slash commands)"
+path = "tui.mdx"
+
+[[source]]
+id = "opencode-v1-troubleshooting"
+group = "opencode-v1"
+title = "Troubleshooting (logs, storage locations)"
+path = "troubleshooting.mdx"
+
+# =============================================================================== OpenCode V2
+[[source]]
+id = "opencode-v2-migrate-v1"
+group = "opencode-v2"
+title = "Migrate from V1 (breaking changes, config mapping)"
+path = "migrate-v1.mdx"
+
+[[source]]
+id = "opencode-v2-plugins-migrate-v1"
+group = "opencode-v2"
+title = "Porting V1 plugins to the V2 plugin API"
+path = "build/plugins/migrate-v1.mdx"
+
+[[source]]
+id = "opencode-v2-config"
+group = "opencode-v2"
+title = "Config (native V2 shape)"
+path = "config.mdx"
+
+[[source]]
+id = "opencode-v2-skills"
+group = "opencode-v2"
+title = "Skills (V2)"
+path = "skills.mdx"
+
+[[source]]
+id = "opencode-v2-agents"
+group = "opencode-v2"
+title = "Agents (V2)"
+path = "agents.mdx"
+
+[[source]]
+id = "opencode-v2-permissions"
+group = "opencode-v2"
+title = "Permissions (V2 ordered rules)"
+path = "permissions.mdx"
+
+[[source]]
+id = "opencode-v2-providers"
+group = "opencode-v2"
+title = "Providers (V2 `providers`/`package`/`settings`)"
+path = "providers.mdx"
+
+[[source]]
+id = "opencode-v2-plugins"
+group = "opencode-v2"
+title = "Plugins (V2 overview)"
+path = "plugins.mdx"
+
+[[source]]
+id = "opencode-v2-cli-plugins"
+group = "opencode-v2"
+title = "CLI (terminal UI) plugins — V2 replacement for TUI plugins"
+path = "cli/plugins.mdx"
+
+[[source]]
+id = "opencode-v2-cli-config"
+group = "opencode-v2"
+title = "CLI settings (cli.json, replaces tui.json)"
+path = "cli/config.mdx"
+
+# =============================================================================== Agent Skills
+[[source]]
+id = "agentskills-specification"
+group = "agentskills"
+title = "Agent Skills specification"
+url = "https://agentskills.io/specification"
+fetch_url = "https://agentskills.io/specification.md"
+
+[[source]]
+id = "agentskills-best-practices"
+group = "agentskills"
+title = "Best practices for skill creators"
+url = "https://agentskills.io/skill-creation/best-practices"
+fetch_url = "https://agentskills.io/skill-creation/best-practices.md"
+
+[[source]]
+id = "agentskills-optimizing-descriptions"
+group = "agentskills"
+title = "Optimizing skill descriptions (triggering)"
+url = "https://agentskills.io/skill-creation/optimizing-descriptions"
+fetch_url = "https://agentskills.io/skill-creation/optimizing-descriptions.md"
+
+[[source]]
+id = "agentskills-evaluating-skills"
+group = "agentskills"
+title = "Evaluating skill output quality"
+url = "https://agentskills.io/skill-creation/evaluating-skills"
+fetch_url = "https://agentskills.io/skill-creation/evaluating-skills.md"
+
+[[source]]
+id = "agentskills-using-scripts"
+group = "agentskills"
+title = "Using scripts in skills"
+url = "https://agentskills.io/skill-creation/using-scripts"
+fetch_url = "https://agentskills.io/skill-creation/using-scripts.md"
+
+# =============================================================================== Expanse
+[[source]]
+id = "expanse-user-guide"
+group = "expanse"
+title = "Expanse User Guide (partitions, charging, GPU, storage, AI resource)"
+kind = "url"
+format = "html"
+url = "https://www.sdsc.edu/systems/expanse/user_guide.html"
+selector = "main"
+note = "Authoritative partition-limit table. Limits 'subject to change' — verify with sinfo/scontrol."
+
+[[source]]
+id = "expanse-101"
+group = "expanse"
+title = "Expanse 101 tutorial (SDSC HPC Training)"
+kind = "github"
+repo = "sdsc-hpc-training-org/expanse-101"
+ref = "main"
+path = "docs/index.md"
+url = "https://github.com/sdsc-hpc-training-org/expanse-101"
+link_base = "https://github.com/sdsc-hpc-training-org/expanse-101/blob/main/docs"
+format = "md"
+
+[[source]]
+id = "expanse-basic-linux-skills"
+group = "expanse"
+title = "Basic Linux skills on Expanse"
+kind = "github"
+repo = "sdsc-hpc-training-org/basic_skills"
+ref = "master"
+path = "basic_linux_skills_expanse/README.md"
+url = "https://github.com/sdsc-hpc-training-org/basic_skills/tree/master/basic_linux_skills_expanse"
+format = "md"
+
+[[source]]
+id = "expanse-interactive-computing"
+group = "expanse"
+title = "Interactive computing on Expanse (srun --pty, salloc)"
+kind = "github"
+repo = "sdsc-hpc-training-org/basic_skills"
+ref = "master"
+path = "interactive_computing/README.md"
+url = "https://github.com/sdsc-hpc-training-org/basic_skills/tree/master/interactive_computing"
+format = "md"
+
+[[source]]
+id = "expanse-running-notebooks"
+group = "expanse"
+title = "Running Jupyter notebooks on Expanse"
+kind = "github"
+repo = "sdsc-hpc-training-org/basic_skills"
+ref = "master"
+path = "running_notebooks_on_expanse/README.md"
+url = "https://github.com/sdsc-hpc-training-org/basic_skills/tree/master/running_notebooks_on_expanse"
+format = "md"
+
+[[source]]
+id = "expanse-connect"
+group = "expanse"
+title = "Connecting to Expanse (SSH, 2FA, keys)"
+kind = "github"
+repo = "sdsc-hpc-training-org/hpc-security"
+ref = "master"
+path = "connecting-to-hpc-systems/connect-to-expanse.md"
+url = "https://github.com/sdsc-hpc-training-org/hpc-security/blob/master/connecting-to-hpc-systems/connect-to-expanse.md"
+format = "md"
+
+[[source]]
+id = "expanse-ssh-tunneling"
+group = "expanse"
+title = "SSH tunneling is more secure (Jupyter/ports)"
+kind = "github"
+repo = "sdsc-hpc-training-org/hpc-security"
+ref = "master"
+path = "ssh_methods/ssh-tunneling-is-more-secure.md"
+url = "https://github.com/sdsc-hpc-training-org/hpc-security/blob/master/ssh_methods/ssh-tunneling-is-more-secure.md"
+format = "md"
+
+[[source]]
+id = "expanse-galyleo"
+group = "expanse"
+title = "galyleo — launch Jupyter on Expanse via Slurm (mkandes)"
+kind = "github"
+repo = "sdsc/galyleo"
+ref = "master"
+path = "README.md"
+url = "https://github.com/sdsc/galyleo"
+format = "md"
+note = "mkandes' tool; he uses it to run OpenCode inside a batch job (notes 2026-06-13b)."
+
+[[source]]
+id = "expanse-batch-computing-readme"
+group = "expanse"
+title = "Getting Started with Batch Job Scheduling: Slurm Edition (mkandes) — overview"
+kind = "github"
+repo = "mkandes/batch-computing"
+ref = "main"
+path = "README.md"
+url = "https://github.com/mkandes/batch-computing"
+format = "md"
+
+[[source]]
+id = "expanse-batch-computing-batch"
+group = "expanse"
+title = "Batch computing: writing and submitting batch jobs (mkandes)"
+kind = "github"
+repo = "mkandes/batch-computing"
+ref = "main"
+path = "BATCH.md"
+url = "https://github.com/mkandes/batch-computing/blob/main/BATCH.md"
+format = "md"
+
+[[source]]
+id = "expanse-batch-computing-fairshare"
+group = "expanse"
+title = "Fair share & job priority on Expanse (mkandes)"
+kind = "github"
+repo = "mkandes/batch-computing"
+ref = "main"
+path = "FAIRSHARE.md"
+url = "https://github.com/mkandes/batch-computing/blob/main/FAIRSHARE.md"
+format = "md"
+note = "STUB upstream (headings only, 2026-09). Priority factors are not publicly documented; see expanse/verify-on-expanse.md."
+
+[[source]]
+id = "expanse-batch-computing-beyond"
+group = "expanse"
+title = "Beyond the basics: arrays, dependencies, etc. (mkandes)"
+kind = "github"
+repo = "mkandes/batch-computing"
+ref = "main"
+path = "BEYOND.md"
+url = "https://github.com/mkandes/batch-computing/blob/main/BEYOND.md"
+format = "md"
+
+[[source]]
+id = "expanse-batch-computing-nohup"
+group = "expanse"
+title = "nohup / background processes (mkandes)"
+kind = "github"
+repo = "mkandes/batch-computing"
+ref = "main"
+path = "NOHUP.md"
+url = "https://github.com/mkandes/batch-computing/blob/main/NOHUP.md"
+format = "md"
+
+[[source]]
+id = "expanse-system-architecture"
+group = "expanse"
+mode = "link"
+title = "Expanse system architecture"
+url = "https://www.sdsc.edu/systems/expanse/system_architecture.html"
+
+[[source]]
+id = "expanse-portal"
+group = "expanse"
+mode = "link"
+title = "Expanse User Portal (Open OnDemand)"
+url = "https://portal.expanse.sdsc.edu"
+note = "Web shell, file browser, Jupyter, job composer."
+
+[[source]]
+id = "expanse-access-page"
+group = "expanse"
+mode = "link"
+title = "Expanse on ACCESS (resource page / allocations)"
+url = "https://allocations.access-ci.org/resources"
+note = "Expanse CPU/GPU are allocated via ACCESS; NAIRR GPU via the NAIRR Pilot."
+
+[[source]]
+id = "expanse-hpctr-examples"
+group = "expanse"
+mode = "link"
+title = "hpctr-examples — SDSC's canonical example Slurm scripts (.sb)"
+url = "https://github.com/sdsc-hpc-training-org/hpctr-examples"
+note = "MPI, OpenMP, hybrid, CUDA, MKL job scripts for Expanse."
+
+[[source]]
+id = "expanse-notebook-examples"
+group = "expanse"
+mode = "link"
+title = "Expanse notebook examples (CPU/GPU)"
+url = "https://github.com/sdsc-hpc-training-org/notebook-examples"
+
+[[source]]
+id = "expanse-hpc-training-docs"
+group = "expanse"
+mode = "link"
+title = "SDSC HPC Training docs site (Docusaurus aggregate of training repos)"
+url = "https://hpc-training.sdsc.edu/hpc-training-docs/"
+note = "Same sync→patch idea as this KB; see its scripts/lib/patch."
+
+[[source]]
+id = "expanse-naked-singularity"
+group = "expanse"
+mode = "link"
+title = "naked-singularity — container definition files for HPC (mkandes)"
+url = "https://github.com/mkandes/naked-singularity"
+
+[[source]]
+id = "expanse-tscc-guide"
+group = "expanse"
+mode = "link"
+title = "TSCC user guide (UCSD campus cluster, not Expanse)"
+url = "https://www.sdsc.edu/systems/tscc/user_guide.html"
+
+# =============================================================================== Slurm
+[[source]]
+id = "slurm-sbatch"
+group = "slurm"
+mode = "link"
+title = "sbatch(1)"
+url = "https://slurm.schedmd.com/sbatch.html"
+
+[[source]]
+id = "slurm-srun"
+group = "slurm"
+mode = "link"
+title = "srun(1)"
+url = "https://slurm.schedmd.com/srun.html"
+
+[[source]]
+id = "slurm-salloc"
+group = "slurm"
+mode = "link"
+title = "salloc(1)"
+url = "https://slurm.schedmd.com/salloc.html"
+
+[[source]]
+id = "slurm-squeue"
+group = "slurm"
+mode = "link"
+title = "squeue(1) (incl. REASON codes)"
+url = "https://slurm.schedmd.com/squeue.html"
+
+[[source]]
+id = "slurm-sacct"
+group = "slurm"
+mode = "link"
+title = "sacct(1)"
+url = "https://slurm.schedmd.com/sacct.html"
+
+[[source]]
+id = "slurm-sinfo"
+group = "slurm"
+mode = "link"
+title = "sinfo(1)"
+url = "https://slurm.schedmd.com/sinfo.html"
+
+[[source]]
+id = "slurm-scontrol"
+group = "slurm"
+mode = "link"
+title = "scontrol(1)"
+url = "https://slurm.schedmd.com/scontrol.html"
+
+[[source]]
+id = "slurm-sprio"
+group = "slurm"
+mode = "link"
+title = "sprio(1)"
+url = "https://slurm.schedmd.com/sprio.html"
+
+[[source]]
+id = "slurm-priority-multifactor"
+group = "slurm"
+mode = "link"
+title = "Multifactor priority plugin (age, fairshare, size, QOS…)"
+url = "https://slurm.schedmd.com/priority_multifactor.html"
+
+[[source]]
+id = "slurm-job-arrays"
+group = "slurm"
+mode = "link"
+title = "Job arrays"
+url = "https://slurm.schedmd.com/job_array.html"
+
+[[source]]
+id = "slurm-gres"
+group = "slurm"
+mode = "link"
+title = "Generic resources (GRES / GPUs)"
+url = "https://slurm.schedmd.com/gres.html"
+
+[[source]]
+id = "slurm-mpi-guide"
+group = "slurm"
+mode = "link"
+title = "MPI users guide (PMI2/PMIx)"
+url = "https://slurm.schedmd.com/mpi_guide.html"
+
+[[source]]
+id = "slurm-faq"
+group = "slurm"
+mode = "link"
+title = "Slurm FAQ"
+url = "https://slurm.schedmd.com/faq.html"
+
+[[source]]
+id = "slurm-summary-pdf"
+group = "slurm"
+mode = "link"
+title = "Slurm command summary (2-page cheat sheet)"
+url = "https://slurm.schedmd.com/pdfs/summary.pdf"
+
+# =============================================================================== NRP / Nautilus
+[[source]]
+id = "nrp-llm-managed"
+group = "nrp"
+title = "Managed LLMs overview (ellm.nrp-nautilus.io)"
+path = "ai/llm-managed.mdx"
+page = "ai/llm-managed"
+format = "mdx"
+
+[[source]]
+id = "nrp-llm-api-access"
+group = "nrp"
+title = "LLM API access (tokens, endpoints, cache_salt)"
+path = "ai/llm-managed/api-access.mdx"
+page = "ai/llm-managed/api-access"
+format = "mdx"
+
+[[source]]
+id = "nrp-llm-models"
+group = "nrp"
+title = "Available models (feature matrix)"
+path = "ai/llm-managed/models.mdx"
+page = "ai/llm-managed/models"
+format = "mdx"
+
+[[source]]
+id = "nrp-llm-client-configs"
+group = "nrp"
+title = "Client configurations (OpenCode, Claude Code, VS Code, …)"
+path = "ai/llm-managed/client-configs.mdx"
+page = "ai/llm-managed/client-configs"
+format = "mdx"
+note = "Its OpenCode recipe uses the V2 config shape."
+
+[[source]]
+id = "nrp-llm-fair-use"
+group = "nrp"
+title = "LLM fair use"
+path = "ai/llm-managed/fair-use.mdx"
+page = "ai/llm-managed/fair-use"
+format = "mdx"
+
+[[source]]
+id = "nrp-llm-lifecycle"
+group = "nrp"
+title = "Model lifecycle (deprecations, aliases)"
+path = "ai/llm-managed/lifecycle.mdx"
+page = "ai/llm-managed/lifecycle"
+format = "mdx"
+
+[[source]]
+id = "nrp-llm-chat-interfaces"
+group = "nrp"
+title = "Chat interfaces"
+path = "ai/llm-managed/chat-interfaces.mdx"
+page = "ai/llm-managed/chat-interfaces"
+format = "mdx"
+
+[[source]]
+id = "nrp-accounting-mcp"
+group = "nrp"
+title = "Accounting MCP server"
+path = "ai/accounting-mcp.mdx"
+page = "ai/accounting-mcp"
+format = "mdx"
+
+[[source]]
+id = "nrp-getting-started"
+group = "nrp"
+title = "Getting started (accounts, namespaces)"
+path = "start/getting-started.mdx"
+page = "start/getting-started"
+format = "mdx"
+
+[[source]]
+id = "nrp-using-nautilus"
+group = "nrp"
+title = "Using Nautilus"
+path = "start/using-nautilus.mdx"
+page = "start/using-nautilus"
+format = "mdx"
+
+[[source]]
+id = "nrp-policies"
+group = "nrp"
+title = "Cluster policies"
+path = "start/policies.mdx"
+page = "start/policies"
+format = "mdx"
+
+[[source]]
+id = "nrp-resources"
+group = "nrp"
+title = "Resources (hardware available)"
+path = "start/resources.mdx"
+page = "start/resources"
+format = "mdx"
+
+[[source]]
+id = "nrp-support"
+group = "nrp"
+title = "Support (Matrix chat, contacts)"
+path = "start/support.md"
+page = "start/support"
+format = "mdx"  # Starlight .md: admonitions need the MDX normaliser
+
+[[source]]
+id = "nrp-glossary"
+group = "nrp"
+title = "Glossary"
+path = "start/glossary.md"
+page = "start/glossary"
+format = "mdx"  # Starlight .md: admonitions need the MDX normaliser
+
+[[source]]
+id = "nrp-gpu-pods"
+group = "nrp"
+title = "GPU pods (requesting GPU types)"
+path = "running/gpu-pods.md"
+page = "running/gpu-pods"
+format = "mdx"  # Starlight .md: admonitions need the MDX normaliser
+
+[[source]]
+id = "nrp-jobs"
+group = "nrp"
+title = "Batch jobs on Kubernetes"
+path = "running/jobs.mdx"
+page = "running/jobs"
+format = "mdx"
+
+[[source]]
+id = "nrp-scheduling"
+group = "nrp"
+title = "Scheduling (node selectors, affinity)"
+path = "running/scheduling.mdx"
+page = "running/scheduling"
+format = "mdx"
+
+[[source]]
+id = "nrp-jupyterhub"
+group = "nrp"
+title = "JupyterHub"
+path = "jupyter/jupyterhub.md"
+page = "jupyter/jupyterhub"
+format = "mdx"  # Starlight .md: admonitions need the MDX normaliser
+
+[[source]]
+id = "nrp-coder"
+group = "nrp"
+title = "Coder (cloud dev workspaces)"
+path = "coder/coder.mdx"
+page = "coder/coder"
+format = "mdx"
+
+[[source]]
+id = "nrp-llm-token"
+group = "nrp"
+mode = "link"
+title = "NRP LLM token page (get your API key)"
+url = "https://nrp.ai/llmtoken"
+
+[[source]]
+id = "nrp-llm-status"
+group = "nrp"
+mode = "link"
+title = "nautilus-llm-status — live availability monitor for NRP vLLM endpoints"
+url = "https://github.com/nrp-nautilus/nautilus-llm-status"
+
+[[source]]
+id = "nrp-cra-tutorial"
+group = "nrp"
+mode = "link"
+title = "cra-tutorial (inference notebook against NRP LLMs)"
+url = "https://github.com/nrp-nautilus/cra-tutorial"
+
+# =============================================================================== hpcGPT / providers / prior art
+[[source]]
+id = "hpcgpt-upstream"
+group = "hpcgpt"
+mode = "link"
+title = "Center-for-AI-Innovation/hpcgpt-cli (multi-center upstream, branch main)"
+url = "https://github.com/Center-for-AI-Innovation/hpcgpt-cli"
+
+[[source]]
+id = "hpcgpt-mkandes"
+group = "hpcgpt"
+mode = "link"
+title = "mkandes/hpcgpt-cli (SDSC fork, branch sdsc)"
+url = "https://github.com/mkandes/hpcgpt-cli/tree/sdsc"
+
+[[source]]
+id = "hpcgpt-triton-ai-models"
+group = "hpcgpt"
+mode = "link"
+title = "UCSD Triton AI API — model hub (current default provider in SDSC/opencode.jsonc)"
+url = "https://tritonai-api.ucsd.edu/ui/model_hub_table"
+
+[[source]]
+id = "hpcgpt-mkandes-notes"
+group = "hpcgpt"
+mode = "link"
+title = "mkandes/notes — dated lab notebook (cited: 2026/06/13b, 07/12, 07/26, 07/27, 08/14a, 09/04, 09/08b, 09/09a, 09/10, 10/12a)"
+url = "https://github.com/mkandes/notes"
+note = "Cite individual dated notes as https://github.com/mkandes/notes/blob/main/YYYY/MM/<file>.md; not mirrored (personal lab notebook)."
+
+[[source]]
+id = "hpcgpt-anthropic-skills"
+group = "hpcgpt"
+mode = "link"
+title = "anthropics/skills — reference SKILL.md examples"
+url = "https://github.com/anthropics/skills"
+
+[[source]]
+id = "hpcgpt-skills-best-practices"
+group = "hpcgpt"
+mode = "link"
+title = "mgechev/skills-best-practices"
+url = "https://github.com/mgechev/skills-best-practices"
+
+[[source]]
+id = "hpcgpt-slurm-skill-imperial"
+group = "hpcgpt"
+mode = "link"
+title = "Imperial College Slurm SKILL.md (prior art mkandes cites)"
+url = "https://github.com/ImperialCollegeLondon/ese-borg-skills/blob/main/plugins/slurm/skills/slurm/SKILL.md"
+
+[[source]]
+id = "hpcgpt-slurm-skill-rizvi"
+group = "hpcgpt"
+mode = "link"
+title = "michaelrizvi Slurm SKILL.md (prior art mkandes cites)"
+url = "https://github.com/michaelrizvi/claude-config/blob/main/skills/slurm/SKILL.md"
+
+[[source]]
+id = "hpcgpt-fastmcp"
+group = "hpcgpt"
+mode = "link"
+title = "FastMCP (Python MCP framework used by SDSC/mcp/chat)"
+url = "https://gofastmcp.com"
+
+[[source]]
+id = "hpcgpt-opencode-releases"
+group = "hpcgpt"
+mode = "link"
+title = "OpenCode releases (check before bumping module version)"
+url = "https://github.com/anomalyco/opencode/releases"
+
+[[source]]
+id = "nrp-llm-model-catalog"
+group = "nrp"
+title = "NRP managed LLM catalog (rendered from the site's models/*.yaml data collection)"
+prefix = "src/content/"
+path = "models"
+format = "yaml-dir"
+url = "https://nrp.ai/documentation/userdocs/ai/llm-managed/models/"
+columns = ["id", "status", "parameters", "quantization", "contextTokens", "badges", "multimodalKinds"]
+note = "The models page's feature matrix is a data-driven widget; this mirror is the underlying data. Live list: GET /v1/models."
+
+# =============================================================================== Generic HPC environments
+[[source]]
+id = "hpcenv-lmod-user-guide"
+group = "hpcenv"
+mode = "link"
+title = "Lmod User Guide (TACC)"
+url = "https://lmod.readthedocs.io/en/latest/010_user.html"
+note = "hpc-modules: spider vs avail, purge keeps sticky, reset, save/restore, ml, stderr output; basis of the Lmod path."
+
+[[source]]
+id = "hpcenv-lmod-spider"
+group = "hpcenv"
+mode = "link"
+title = "Lmod: module spider"
+url = "https://lmod.readthedocs.io/en/latest/135_module_spider.html"
+note = "hpc-modules step 2: exact 'load all module(s) on any one of the lines' wording; case-insensitive and -r regex search."
+
+[[source]]
+id = "hpcenv-lmod-extensions"
+group = "hpcenv"
+mode = "link"
+title = "Lmod: extensions"
+url = "https://lmod.readthedocs.io/en/latest/330_extensions.html"
+note = "hpc-modules aliases: Python packages found as (E) extensions of another module."
+
+[[source]]
+id = "hpcenv-lmod-installing"
+group = "hpcenv"
+mode = "link"
+title = "Lmod: Installing (init files, BASH_ENV)"
+url = "https://lmod.readthedocs.io/en/latest/030_installing.html"
+note = "hpc-modules step 1: z00_lmod.sh init, LMOD_CMD, BASH_ENV; '#!/bin/sh won't define module' guideline."
+
+[[source]]
+id = "hpcenv-envmodules-man"
+group = "hpcenv"
+mode = "link"
+title = "Environment Modules module(1) man page"
+url = "https://modules.readthedocs.io/en/latest/module.html"
+note = "hpc-modules envmodules.md: avail flags (-t, -j, -i, -C, -S), --force, (default)/@ markers, MODULESHOME."
+
+[[source]]
+id = "hpcenv-envmodules-changes"
+group = "hpcenv"
+mode = "link"
+title = "Environment Modules: changes between versions"
+url = "https://modules.readthedocs.io/en/latest/changes.html"
+note = "hpc-modules envmodules.md: version each feature arrived (search 4.0, ml 4.5, reset 5.2, spider 5.6); stderr behaviour without a TTY."
+
+[[source]]
+id = "hpcenv-envmodules-migrating"
+group = "hpcenv"
+mode = "link"
+title = "Environment Modules: MIGRATING"
+url = "https://modules.readthedocs.io/en/latest/MIGRATING.html"
+note = "hpc-modules module-errors.md: exact EM error strings (Unable to locate a modulefile, conflict, sticky purge)."
+
+[[source]]
+id = "hpcenv-envmodules-news"
+group = "hpcenv"
+mode = "link"
+title = "Environment Modules: NEWS (release history)"
+url = "https://modules.readthedocs.io/en/latest/NEWS.html"
+note = "Release dates (5.6 spider, 5.7.0 latest) and --dumpname support on Lmod ≥8.7.50 / EM ≥5.6."
+
+[[source]]
+id = "hpcenv-easybuild-survey"
+group = "hpcenv"
+mode = "link"
+title = "EasyBuild user survey"
+url = "https://docs.easybuild.io/user-survey/"
+note = "Survey results are chart images only; the ~80% Lmod share is a secondhand figure not stated on the page. Used only as a weak signal that Lmod is the majority."
+
+[[source]]
+id = "hpcenv-spack-modules"
+group = "hpcenv"
+mode = "link"
+title = "Spack: modules (Tcl/Lmod generation, naming)"
+url = "https://spack.readthedocs.io/en/latest/module_file_support.html"
+note = "hpc-modules aliases: Spack naming (py-*, flat -compiler-hash), hierarchy, user-tree 'module use' fallback."
+
+[[source]]
+id = "hpcenv-easybuild-terminology"
+group = "hpcenv"
+mode = "link"
+title = "EasyBuild terminology (toolchains)"
+url = "https://docs.easybuild.io/terminology/"
+note = "hpc-modules aliases: foss/gompi/intel toolchain names and Name/ver-toolchain[-CUDA-x] convention."
+
+[[source]]
+id = "hpcenv-hpe-cpe-swap"
+group = "hpcenv"
+mode = "link"
+title = "HPE Cray PE: Programming Environment modules"
+url = "https://cpe.ext.hpe.com/docs/latest/craype/swap_prg_env.html"
+note = "hpc-modules guideline: swap PrgEnv-* instead of purge+load; craype-network before PrgEnv on Lmod."
+
+[[source]]
+id = "hpcenv-lumi-lmod"
+group = "hpcenv"
+mode = "link"
+title = "LUMI docs: Lmod modules"
+url = "https://docs.lumi-supercomputer.eu/runjobs/lumi_env/Lmod_modules/"
+note = "hpc-modules: load one prerequisite line, sticky stacks, avoid --force purge, saved collections are fragile."
+
+[[source]]
+id = "hpcenv-nersc-lmod"
+group = "hpcenv"
+mode = "link"
+title = "NERSC: Lmod"
+url = "https://docs.nersc.gov/environment/lmod/"
+note = "hpc-modules: 'always use spider not avail', cpu/gpu mutual exclusion, $LMOD_PKG init, error strings."
+
+[[source]]
+id = "hpcenv-alliance-stdenv"
+group = "hpcenv"
+mode = "link"
+title = "Alliance Canada: standard software environments"
+url = "https://docs.alliancecan.ca/wiki/Standard_software_environments"
+note = "hpc-modules: example of a sticky site default (StdEnv) that purge must not remove; one StdEnv per job."
+
+[[source]]
+id = "hpcenv-lrz-lmod"
+group = "hpcenv"
+mode = "link"
+title = "LRZ: Environment Modules (Lmod)"
+url = "https://doku.lrz.de/spaces/UniARZHPCKB/pages/392035452/Environment+Modules+Lmod"
+note = "hpc-modules batch block: purge in sbatch scripts because jobs inherit the submit environment."
+
+[[source]]
+id = "hpcenv-strath-modules"
+group = "hpcenv"
+mode = "link"
+title = "Strathclyde HPC: modules"
+url = "https://docs.hpc.strath.ac.uk/user-guide/modules/"
+note = "hpc-modules guardrail: module loads in job scripts, not .bashrc."
+
+[[source]]
+id = "hpcenv-psu-modules"
+group = "hpcenv"
+mode = "link"
+title = "Penn State ICDS: modules"
+url = "https://docs.icds.psu.edu/software/modules"
+note = "hpc-modules guideline: pin name/version for reproducibility."
+
+[[source]]
+id = "hpcenv-miniforge"
+group = "hpcenv"
+mode = "link"
+title = "conda-forge/miniforge README"
+url = "https://github.com/conda-forge/miniforge"
+note = "hpc-conda: Miniforge install line (-b -p, uname), batch install doesn't edit .bashrc, Mambaforge retired."
+
+[[source]]
+id = "hpcenv-anaconda-tos"
+group = "hpcenv"
+mode = "link"
+title = "Anaconda Terms of Service FAQ"
+url = "https://www.anaconda.com/pricing/terms-of-service-faqs"
+note = "hpc-conda: why 'defaults' is flagged as an institutional licensing question (200-employee threshold, academic EULA)."
+
+[[source]]
+id = "hpcenv-conda-settings"
+group = "hpcenv"
+mode = "link"
+title = "conda configuration settings"
+url = "https://docs.conda.io/projects/conda/en/latest/user-guide/configuration/settings.html"
+note = "hpc-conda: envs_dirs / pkgs_dirs semantics for keeping envs and cache out of home."
+
+[[source]]
+id = "hpcenv-conda-libmamba"
+group = "hpcenv"
+mode = "link"
+title = "conda 23.10: libmamba default solver"
+url = "https://discuss.python.org/t/announcement-conda-23-10-0-release-libmamba-is-now-the-default-dependency-solver/38096"
+note = "hpc-conda guideline: plain conda is fast since 23.10; mamba optional."
+
+[[source]]
+id = "hpcenv-condaforge-tips"
+group = "hpcenv"
+mode = "link"
+title = "conda-forge tips & tricks"
+url = "https://conda-forge.org/docs/user/tipsandtricks/"
+note = "hpc-conda: strict channel priority, CONDA_OVERRIDE_CUDA on GPU-less nodes, mpi-external label."
+
+[[source]]
+id = "hpcenv-mpi4py-install"
+group = "hpcenv"
+mode = "link"
+title = "mpi4py installation docs"
+url = "https://mpi4py.readthedocs.io/en/latest/install.html"
+note = "hpc-conda mpi4py recipe: build against system MPI or external_* placeholders."
+
+[[source]]
+id = "hpcenv-conda-pack"
+group = "hpcenv"
+mode = "link"
+title = "conda-pack docs"
+url = "https://conda.github.io/conda-pack/"
+note = "hpc-conda recipe: pack / unpack / conda-unpack commands."
+
+[[source]]
+id = "hpcenv-olcf-sbcast-conda"
+group = "hpcenv"
+mode = "link"
+title = "OLCF: conda-pack + sbcast to node-local NVMe"
+url = "https://docs.olcf.ornl.gov/software/python/sbcast_conda.html"
+note = "hpc-conda guideline: 8-node timing shows conda-pack only pays off at scale (NVMe 1:17 vs Lustre 0:57 vs NFS 4:04)."
+
+[[source]]
+id = "hpcenv-nersc-python"
+group = "hpcenv"
+mode = "link"
+title = "NERSC: Python / conda"
+url = "https://docs.nersc.gov/development/languages/python/nersc-python/"
+note = "hpc-conda: envs_dirs on a software filesystem, don't mix own conda with site Python modules, build mpi4py from source."
+
+[[source]]
+id = "hpcenv-tacc-software"
+group = "hpcenv"
+mode = "link"
+title = "TACC: software basics (conda not on $WORK)"
+url = "https://docs.tacc.utexas.edu/basics/software/"
+note = "hpc-conda overview: sites disagree on env location, so discover and ask instead of hard-coding."
+
+[[source]]
+id = "hpcenv-alliance-anaconda"
+group = "hpcenv"
+mode = "link"
+title = "Alliance Canada: Anaconda (discouraged)"
+url = "https://docs.alliancecan.ca/wiki/Anaconda/en"
+note = "hpc-conda: half-a-home-file-quota claim, .bashrc conflicts; 'some sites discourage conda' line."
+
+[[source]]
+id = "hpcenv-lumi-container-wrapper"
+group = "hpcenv"
+mode = "link"
+title = "LUMI: container wrapper (Tykky)"
+url = "https://docs.lumi-supercomputer.eu/software/installing/container-wrapper/"
+note = "hpc-conda: containerised envs as a site option; LUMI's academic-license note on defaults."
+
+[[source]]
+id = "hpcenv-uva-miniforge"
+group = "hpcenv"
+mode = "link"
+title = "UVA RC: Anaconda → Miniforge transition"
+url = "https://rc.virginia.edu/2024/10/transition-from-anaconda-to-miniforge-october-15-2024"
+note = "hpc-conda: evidence sites replaced Anaconda modules with Miniforge (detect what a conda module really is)."
+
+[[source]]
+id = "hpcenv-msu-auto-activate"
+group = "hpcenv"
+mode = "link"
+title = "MSU ICER: deactivate conda base"
+url = "https://icer.msu.edu/about/announcements/how-deactivate-conda-base-environment"
+note = "hpc-conda audit item 3: base auto-activation as a common HPC problem."
+
+[[source]]
+id = "hpcenv-kempner-uv"
+group = "hpcenv"
+mode = "link"
+title = "Kempner handbook: uv environments"
+url = "https://handbook.eng.kempnerinstitute.harvard.edu/s1_high_performance_computing/development_and_runtime_envs/using_uv_env.html"
+note = "hpc-conda guideline: venv/uv for pure-PyPI work; modules still supply CUDA/MPI/compilers."
+
+[[source]]
+id = "hpcenv-ncar-uv"
+group = "hpcenv"
+mode = "link"
+title = "NCAR: uv"
+url = "https://ncar-hpc-docs.readthedocs.io/en/latest/environment-and-software/user-environment/package-managers/uv/"
+note = "hpc-conda: uv suits pure-Python workloads; caches belong off home."
+
+# =============================================================================== Evaluation research
+[[source]]
+id = "evals-cost-of-pass"
+group = "evals"
+mode = "link"
+title = "Erol et al., Cost-of-Pass (arXiv 2504.13359, ICLR 2026)"
+url = "https://arxiv.org/html/2504.13359v2"
+note = "Defines expected cost per correct answer; basis for our tokens-per-solved-task metric."
+
+[[source]]
+id = "evals-anthropic-demystifying"
+group = "evals"
+mode = "link"
+title = "Anthropic, Demystifying evals for AI agents (2026-01-09)"
+url = "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents"
+note = "Grader types, transcript metrics (turns, tokens), pass^k, balanced trigger sets, 20-50 starting tasks."
+
+[[source]]
+id = "evals-skill-creator"
+group = "evals"
+mode = "link"
+title = "Anthropic skill-creator SKILL.md (anthropics/skills)"
+url = "https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md"
+note = "Trigger-eval protocol: ~20 queries, near-miss negatives, 3 runs, 60/40 split; with/without-skill baseline."
+
+[[source]]
+id = "evals-swe-skills-bench"
+group = "evals"
+mode = "link"
+title = "Han et al., SWE-Skills-Bench (arXiv 2603.15401)"
+url = "https://arxiv.org/html/2603.15401"
+note = "Token overhead ratio and cost efficiency; tokens and accuracy don't correlate; context interference; ceiling effects."
+
+[[source]]
+id = "evals-skillsbench"
+group = "evals"
+mode = "link"
+title = "Li et al., SkillsBench (arXiv 2602.12670; not peer-reviewed)"
+url = "https://arxiv.org/html/2602.12670v1"
+note = "With/without-skill design, normalized gain, domain spread, compact > comprehensive skills. Doc cites v1 numbers (v1 has 84/86 task and 16.2/12.66 gain conflicts); v4 (2026-06) reports 87 tasks, 8 domains, +16.6 pp."
+
+[[source]]
+id = "evals-anthropic-agent-skills"
+group = "evals"
+mode = "link"
+title = "Anthropic, Equipping agents for the real world with Agent Skills (2025-10-16)"
+url = "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills"
+note = "Progressive disclosure, i.e. the fixed metadata token tax a skill adds to every request."
+
+[[source]]
+id = "evals-skill-blocks"
+group = "evals"
+mode = "link"
+title = "Nakasuji, Skill Blocks (arXiv 2608.14943)"
+url = "https://arxiv.org/abs/2608.14943"
+note = "Cache-correct token accounting; loading strategy cuts input 27.4-73.0% depending on benchmark/strategy; \"no universal winner\" (abstract)."
+
+[[source]]
+id = "evals-skillreducer"
+group = "evals"
+mode = "link"
+title = "Gao et al., SkillReducer (arXiv 2603.29919)"
+url = "https://arxiv.org/abs/2603.29919"
+note = "Shorter skill bodies kept or improved quality (abstract only); supports trimming draft skills."
+
+[[source]]
+id = "evals-anthropic-statistical"
+group = "evals"
+mode = "link"
+title = "Anthropic, A statistical approach to model evaluations (2024-11-19)"
+url = "https://www.anthropic.com/research/statistical-approach-to-model-evals"
+note = "Task as unit, paired differences, clustered standard errors, power analysis."
+
+[[source]]
+id = "evals-tau-bench"
+group = "evals"
+mode = "link"
+title = "Yao et al., tau-bench (arXiv 2406.12045)"
+url = "https://arxiv.org/pdf/2406.12045"
+note = "Origin of pass^k, our consistency metric."
+
+[[source]]
+id = "evals-reliabilitybench"
+group = "evals"
+mode = "link"
+title = "ReliabilityBench (arXiv 2601.06112)"
+url = "https://arxiv.org/pdf/2601.06112"
+note = "States pass^k = (pass^1)^k only under independence; correlated runs deviate."
+
+[[source]]
+id = "evals-llm-judge-zheng"
+group = "evals"
+mode = "link"
+title = "Zheng et al., Judging LLM-as-a-Judge (arXiv 2306.05685, NeurIPS 2023)"
+url = "https://arxiv.org/abs/2306.05685"
+note = "Judge position/verbosity bias; relevant to grading explanations."
+
+[[source]]
+id = "evals-husain-judge"
+group = "evals"
+mode = "link"
+title = "Hamel Husain on LLM-as-a-judge (via Simon Willison, 2024-10-30)"
+url = "https://feeds.simonwillison.net/2024/Oct/30/llm-as-a-judge"
+note = "Binary per-criterion judges calibrated on human labels (secondary)."
+
+[[source]]
+id = "evals-qedbench"
+group = "evals"
+mode = "link"
+title = "QEDBench (arXiv 2602.20629)"
+url = "https://arxiv.org/pdf/2602.20629"
+note = "Frontier LLM judges inflated mean proof scores by up to +0.36: judge leniency risk."
+
+[[source]]
+id = "evals-terminal-bench"
+group = "evals"
+mode = "link"
+title = "Merrill et al., Terminal-Bench (arXiv 2601.11868)"
+url = "https://arxiv.org/abs/2601.11868v1"
+note = "Per-task environments + verification tests: harness format to copy for Expanse tasks."
+
+[[source]]
+id = "evals-os-harm"
+group = "evals"
+mode = "link"
+title = "Kuntz et al., OS-Harm (arXiv 2506.14866, NeurIPS 2025)"
+url = "https://arxiv.org/pdf/2506.14866"
+note = "Sandboxed safety eval design; judge-human agreement F1 0.76-0.79 as a reference."
+
+[[source]]
+id = "evals-toolemu"
+group = "evals"
+mode = "link"
+title = "Ruan et al., Identifying the Risks of LM Agents with an LM-Emulated Sandbox (ToolEmu, arXiv 2309.15817, ICLR 2024)"
+url = "https://arxiv.org/pdf/2309.15817"
+note = "Even the safest agent failed 23.9%: motivates a destructive-command metric."
+
+[[source]]
+id = "evals-agent-safetybench"
+group = "evals"
+mode = "link"
+title = "Zhang et al., Agent-SafetyBench (arXiv 2412.14470)"
+url = "https://arxiv.org/pdf/2412.14470"
+note = "No agent above 60% safe across 16 agents: motivates the bash-policy (deny/ask/print-only) test."
+
+[[source]]
+id = "evals-claude-code-auto-mode"
+group = "evals"
+mode = "link"
+title = "Hughes, How we built Claude Code auto mode: a safer way to skip permissions (Anthropic, 2026-03-25)"
+url = "https://www.anthropic.com/engineering/claude-code-auto-mode"
+note = "93% of permission prompts approved (vendor data); wrong-job-cancel example; informs ask vs deny."
+
+[[source]]
+id = "evals-agents-md"
+group = "evals"
+mode = "link"
+title = "Gloaguen et al., Evaluating AGENTS.md (arXiv 2602.11988)"
+url = "https://arxiv.org/abs/2602.11988"
+note = "Generic repo context files raised cost >20% without gains: risk for overview-style umbrella skills."
+
+[[source]]
+id = "evals-pearc26-hpc-support"
+group = "evals"
+mode = "link"
+title = "A Comparative Study on LLM-enabled HPC User Support (PEARC '26, DOI 10.1145/3785462.3815796)"
+url = "https://dl.acm.org/doi/10.1145/3785462.3815796"
+note = "Closest precedent: Rutgers authors with SDSC, TACC, UChicago; TACC ticket replay, per-category results (details from press release; ACM full text not checked)."
+
+[[source]]
+id = "evals-askhpc"
+group = "evals"
+mode = "link"
+title = "Bondapalli et al., AskHPC (HUST-25 at SC25)"
+url = "https://sc25.supercomputing.org/proceedings/workshops/workshop_pages/ws_hust112.html"
+note = "No-context vs generic RAG vs site-tuned retrieval: same shape as our no-skill/generic/Expanse arms (secondary)."
+
+[[source]]
+id = "evals-chathpc"
+group = "evals"
+mode = "link"
+title = "ORNL, chatHPC (J. Supercomputing 81:194, 2025)"
+url = "https://www.ornl.gov/publication/chathpc-empowering-hpc-users-large-language-models"
+note = "Metric set (coherence, semantic accuracy, hallucination, privacy) for explainability scoring (secondary)."
+
+# =============================================================================== Added in the 2026-10 accuracy review
+[[source]]
+id = "evals-iscript"
+group = "evals"
+mode = "link"
+title = "iScript (arXiv 2603.04476)"
+url = "https://arxiv.org/abs/2603.04476"
+note = "Static syntax check then LLM functional evaluation of generated scripts: pattern for grading sbatch output."
+
+[[source]]
+id = "evals-husain-write-judge"
+group = "evals"
+mode = "link"
+title = "ai-evals-course write-judge-prompt skill (H. Husain)"
+url = "https://github.com/ai-evals-course/evals-skills/blob/main/skills/write-judge-prompt/SKILL.md"
+note = "Binary one-failure-mode judges; needs >=20 Pass and >=20 Fail human labels first."
+
+[[source]]
+id = "evals-pearc26-press"
+group = "evals"
+mode = "link"
+title = "HPCwire: Rutgers students win best student paper at PEARC 2026"
+url = "https://www.hpcwire.com/off-the-wire/rutgers-students-win-best-student-paper-at-pearc-2026-for-study-of-llm-based-hpc-user-support/"
+note = "Press release; the only accessible source for the PEARC '26 study's details."
+
+[[source]]
+id = "slurm-man-index"
+group = "slurm"
+mode = "link"
+title = "Slurm man pages index"
+url = "https://slurm.schedmd.com/man_index.html"
+note = "Entry point for command references in slurm-on-expanse."
+
+[[source]]
+id = "slurm-job-reason-codes"
+group = "slurm"
+mode = "link"
+title = "Slurm job reason codes"
+url = "https://slurm.schedmd.com/job_reason_codes.html"
+note = "Authority for the pending-reason table in slurm-on-expanse."
+
+[[source]]
+id = "slurm-scancel"
+group = "slurm"
+mode = "link"
+title = "scancel man page"
+url = "https://slurm.schedmd.com/scancel.html"
+note = "Cancel commands used in slurm-on-expanse."
+
+[[source]]
+id = "slurm-sshare"
+group = "slurm"
+mode = "link"
+title = "sshare man page"
+url = "https://slurm.schedmd.com/sshare.html"
+note = "Fair-share view used in slurm-on-expanse and verify-on-expanse."
+
+[[source]]
+id = "hpcgpt-vllm-gpu-install"
+group = "hpcgpt"
+mode = "link"
+title = "vLLM GPU installation (compute capability requirement)"
+url = "https://docs.vllm.ai/en/latest/getting_started/installation/gpu.html"
+note = "vLLM requires compute capability >= 7.5, so V100 is unsupported (gpu-selection)."
+
+[[source]]
+id = "hpcgpt-flash-attention"
+group = "hpcgpt"
+mode = "link"
+title = "Dao-AILab/flash-attention README"
+url = "https://github.com/Dao-AILab/flash-attention"
+note = "FA2 needs Ampere+, FA3 needs Hopper (gpu-selection)."
+
+[[source]]
+id = "hpcgpt-nvidia-cuda-gpus"
+group = "hpcgpt"
+mode = "link"
+title = "NVIDIA CUDA GPUs compute capability table"
+url = "https://developer.nvidia.com/cuda-gpus"
+note = "Compute capability of V100/A100/H100 (gpu-selection)."
+
+[[source]]
+id = "opencode-v1-source"
+group = "hpcgpt"
+mode = "link"
+title = "anomalyco/opencode at v1.18.32 (V1 source)"
+url = "https://github.com/anomalyco/opencode/tree/v1.18.32"
+note = "Config-dir order (src/config/paths.ts), skill discovery/frontmatter checks (src/skill/index.ts), headless permission auto-reject (src/cli/cmd/run.ts)."
+
+[[source]]
+id = "opencode-v1-19-0-release"
+group = "hpcgpt"
+mode = "link"
+title = "OpenCode v1.19.0 release notes"
+url = "https://github.com/anomalyco/opencode/releases/tag/v1.19.0"
+note = "upgrade --major and /update path to V2; automatic updates stopped (v1-vs-v2)."
+
+[[source]]
+id = "opencode-npm-v1"
+group = "hpcgpt"
+mode = "link"
+title = "opencode-ai on npm (V1)"
+url = "https://www.npmjs.com/package/opencode-ai"
+note = "Latest V1 version and dates (v1-vs-v2)."
+
+[[source]]
+id = "opencode-npm-v2"
+group = "hpcgpt"
+mode = "link"
+title = "@opencode/cli on npm (V2)"
+url = "https://www.npmjs.com/package/@opencode/cli"
+note = "Latest V2 version and dates (v1-vs-v2)."
+
+[[source]]
+id = "opencode-v2-cli-plugins-build"
+group = "hpcgpt"
+mode = "link"
+title = "Building CLI plugins (OpenCode V2)"
+url = "https://opencode.ai/v2/docs/build/plugins/cli"
+note = "Port target for SDSC's V1 TUI plugins (v1-vs-v2)."
+
+[[source]]
+id = "nrp-llm-status-page"
+group = "nrp"
+mode = "link"
+title = "NRP LLM status page"
+url = "https://nrp.ai/llm-status"
+note = "Official live status of NRP's managed LLMs."
+
+[[source]]
+id = "nrp-contact"
+group = "nrp"
+mode = "link"
+title = "NRP contact / support"
+url = "https://nrp.ai/contact/"
+note = "Support and Matrix entry point (overview)."
+
+[[source]]
+id = "nrp-aup"
+group = "nrp"
+mode = "link"
+title = "NRP Acceptable Use Policy (PDF)"
+url = "https://nrp.ai/NRP-AUP.pdf"
+note = "Non-commercial use rule (glossary, llm-api-for-opencode)."
+
+[[source]]
+id = "expanse-nairr-allocations"
+group = "expanse"
+mode = "link"
+title = "NAIRR Pilot allocations"
+url = "https://nairrpilot.org/opportunities/allocations"
+note = "Where expanse_nairr_gpu (H100) time comes from (allocations-and-sus)."
+
+[[source]]
+id = "expanse-access-support"
+group = "expanse"
+mode = "link"
+title = "ACCESS support / help desk"
+url = "https://support.access-ci.org/"
+note = "Help desk link in access-and-environment."
+
+[[source]]
+id = "expanse-sdsc-systems-nrp"
+group = "expanse"
+mode = "link"
+title = "SDSC systems: NRP"
+url = "https://www.sdsc.edu/systems/nrp/index.html"
+note = "SDSC lists NRP among the systems it operates (nautilus-nrp/overview)."

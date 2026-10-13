@@ -1,0 +1,3 @@
+beautifulsoup4>=4.12
+PyYAML>=6
+# plus system binaries: pandoc (>=3), gh (optional; raises GitHub API rate limit)
