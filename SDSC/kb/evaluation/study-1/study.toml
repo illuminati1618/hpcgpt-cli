@@ -1,0 +1,125 @@
+# Study 1: no skill vs generic skill vs Expanse skill. Protocol: ../study-1-protocol.md
+# Read by ../harness/skilleval.py. Change nothing here after the pilot starts without bumping `version`.
+
+[study]
+id = "study-1"
+version = 1
+questions = "questions.toml"
+model = "nrp/gemma"          # Gemma 4 31B on the NRP LLM service
+opencode_version = "1.18.32" # latest OpenCode V1 at time of writing
+agent = "hpcGPT"             # the SDSC persona as registered from SDSC/agents/hpcgpt.md (see protocol: agent)
+repeats = 3
+timeout_s = 600
+seed = 1                     # run order is shuffled with this seed
+
+# The pack every arm starts from: SDSC/ at this commit of hpcgpt-cli (opencode.jsonc, agents/, skills/ ...).
+base_ref = "8aa32a42ec7a355518a6f1029055ee16eb759a54"   # sdsc
+# Skills shipped in the base pack that stay in every arm (they have no generic/Expanse twin).
+base_skills = ["slurm", "expanse-client"]
+
+[arms.A]
+label = "no skill"
+skills = []
+
+[arms.B]
+label = "generic"
+skills = [
+  { name = "hpc-modules", ref = "c9a08c561590dd99fc0c75ba3c3d19f3158544e9" },  # skill/hpc-modules
+  { name = "hpc-conda",   ref = "313feb97e5a94981d4c5f594d2eebdb186d796fe" },  # skill/hpc-conda
+]
+
+[arms.C]
+label = "Expanse"
+skills = [
+  { name = "expanse-modules", ref = "59b85a71b26374de87c33b55dbdf65a13cbb5bf2" },  # skill/expanse-modules
+  { name = "expanse-conda",   ref = "d780a0a0c6ff206013f834936ae974183a0a80e2" },  # skill/expanse-conda
+]
+
+# Eval-only bash policy, written into the agent's frontmatter in place of `bash: ask` (headless runs
+# auto-reject every `ask`). Read-only commands only. OpenCode applies the LAST matching rule, so the
+# catch-all deny comes first and the specific denies come last.
+[permission]
+external_directory = "allow"
+
+[permission.bash]
+"*" = "deny"
+"module *" = "allow"
+"ml *" = "allow"
+"source *" = "allow"
+". *" = "allow"
+"type *" = "allow"
+"command *" = "allow"
+"which *" = "allow"
+"echo *" = "allow"
+"printf *" = "allow"
+"cat *" = "allow"
+"head *" = "allow"
+"tail *" = "allow"
+"ls" = "allow"
+"ls *" = "allow"
+"pwd" = "allow"
+"df *" = "allow"
+"du *" = "allow"
+"stat *" = "allow"
+"find *" = "allow"
+"grep *" = "allow"
+"awk *" = "allow"
+"sed *" = "allow"
+"sort *" = "allow"
+"uniq *" = "allow"
+"cut *" = "allow"
+"tr *" = "allow"
+"wc *" = "allow"
+"column *" = "allow"
+"env" = "allow"
+"printenv *" = "allow"
+"id" = "allow"
+"id *" = "allow"
+"whoami" = "allow"
+"hostname" = "allow"
+"hostname *" = "allow"
+"uname *" = "allow"
+"date" = "allow"
+"test *" = "allow"
+"break" = "allow"
+"continue" = "allow"
+"true" = "allow"
+"false" = "allow"
+"[ *" = "allow"
+"conda --version" = "allow"
+"conda info*" = "allow"
+"conda env list*" = "allow"
+"conda list*" = "allow"
+"conda config --show*" = "allow"
+"*/bin/conda --version" = "allow"
+"*/bin/conda info*" = "allow"
+"*/bin/conda env list*" = "allow"
+"*/bin/conda list*" = "allow"
+"*/bin/conda config --show*" = "allow"
+"\"$C\" --version" = "allow"
+"\"$C\" info*" = "allow"
+"\"$C\" env list*" = "allow"
+"\"$C\" config --show*" = "allow"
+"sinfo*" = "allow"
+"squeue*" = "allow"
+"sacct*" = "allow"
+"sshare*" = "allow"
+"sprio*" = "allow"
+"scontrol show *" = "allow"
+"expanse-client *" = "allow"
+"lfs quota *" = "allow"
+"quota*" = "allow"
+"nvidia-smi*" = "allow"
+"timeout 60 du *" = "allow"
+# variable assignments used by the conda audits (C=conda path, R=conda base)
+"C=*" = "allow"
+"R=*" = "allow"
+# specific denies (win because they come last)
+"find * -delete*" = "deny"
+"find * -exec*" = "deny"
+"sed *-i*" = "deny"
+"module save*" = "deny"
+"* > *" = "deny"
+"* >> *" = "deny"
+"*>>*" = "deny"
+"* | tee *" = "deny"
