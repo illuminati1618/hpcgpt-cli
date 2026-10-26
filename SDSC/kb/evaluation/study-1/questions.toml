@@ -1,0 +1,199 @@
+# Study 1 questions: generic vs Expanse-specific skills.
+# Protocol: ../study-1-protocol.md
+#
+# Each question targets a skill area that has BOTH a generic and an Expanse version
+# (modules: hpc-modules / expanse-modules; conda: hpc-conda / expanse-conda).
+# Prompts are written the way a user would type them; none names a skill.
+#
+# `reference` and `checklist` are the ground truth for Expanse. They come from the Expanse user guide and the
+# skills' design notes and are docs-only until checked on Expanse (see ../../expanse/verify-on-expanse.md).
+#
+# `[[questions.checks]]` are automatic, provisional checks on the final answer (Python regex, case-insensitive,
+# multiline). kind = "must" passes when the pattern matches; "must_not" passes when it does not. They screen
+# answers; the human-graded checklist decides pass/fail in the pilot.
+
+[[questions]]
+id = "Q1"
+area = "modules"
+shape = "narrow; Expanse facts should help"
+skills = { generic = "hpc-modules", expanse = "expanse-modules" }
+prompt = "I need GROMACS with GPU support for a batch job on the GPU nodes. Which modules should I load?"
+reference = """
+Expanse uses Lmod with hierarchical Spack stacks. GPU nodes use the `gpu` stack, so the load order is
+`gpu/<ver>` -> compiler -> MPI (if needed) -> `gromacs/<ver>`, found with `module spider gromacs`.
+`slurm` stays loaded. The `cpu` and `gpu` stacks are never loaded together. The answer gives pinned
+versions taken from spider output, not invented ones, and a batch-script block starting with `module purge`.
+"""
+checklist = [
+  "Uses the gpu stack (not cpu) for a GPU job",
+  "Module names/versions come from spider output, none invented",
+  "Prerequisites (compiler, MPI if needed) loaded before gromacs, in hierarchy order",
+  "Keeps or re-adds slurm after module purge",
+  "Gives a batch-script block",
+  "Does not load cpu and gpu stacks together",
+]
+sources = ["expanse-user-guide", "hpcenv-lmod-spider"]
+
+  [[questions.checks]]
+  id = "gromacs-named"
+  kind = "must"
+  pattern = 'gromacs/'
+
+  [[questions.checks]]
+  id = "gpu-stack"
+  kind = "must"
+  pattern = 'module load[^\n]*\bgpu\b'
+
+  [[questions.checks]]
+  id = "no-cpu-and-gpu"
+  kind = "must_not"
+  pattern = 'module load[^\n]*\bcpu\b[^\n]*\bgpu\b|module load[^\n]*\bgpu\b[^\n]*\bcpu\b'
+
+  [[questions.checks]]
+  id = "slurm-kept"
+  kind = "must"
+  pattern = 'module load[^\n]*\bslurm\b'
+
+[[questions]]
+id = "Q2"
+area = "modules"
+shape = "error; Expanse facts should help"
+skills = { generic = "hpc-modules", expanse = "expanse-modules" }
+prompt = """
+My batch job script does `module purge` and then `module load gcc openmpi`, and now the job fails with \
+`srun: command not found`. It worked before I added the purge. What's wrong and how do I fix it?"""
+reference = """
+Two problems. `module purge` removes the `slurm` module, which puts `srun`/`sbatch` on PATH, so it must be
+loaded again. And on Expanse `gcc`/`openmpi` live inside a stack, so `module load gcc` fails after a purge
+until `cpu/<ver>` (or `gpu/<ver>`) is loaded first. Fix: `module purge`, `module load cpu/<ver>`,
+`module load slurm`, then pinned `gcc/<ver> openmpi/<ver>`, checked with spider / a dry-run load.
+"""
+checklist = [
+  "Explains that purge removed the module providing srun (slurm)",
+  "Re-adds slurm after the purge",
+  "Loads a stack (cpu) before gcc/openmpi",
+  "Pinned versions from spider/dry-run, none invented",
+  "Does not suggest `module --force purge`",
+]
+sources = ["expanse-user-guide", "hpcenv-lmod-user-guide"]
+
+  [[questions.checks]]
+  id = "slurm-readded"
+  kind = "must"
+  pattern = 'module load[^\n]*\bslurm\b'
+
+  [[questions.checks]]
+  id = "stack-first"
+  kind = "must"
+  pattern = 'module load[^\n]*\bcpu\b'
+
+  [[questions.checks]]
+  id = "no-force-purge"
+  kind = "must_not"
+  pattern = '--force\s+purge'
+
+[[questions]]
+id = "Q3"
+area = "conda"
+shape = "narrow; quota"
+skills = { generic = "hpc-conda", expanse = "expanse-conda" }
+prompt = "I made a few conda environments and now I get 'Disk quota exceeded' in my home directory. What should I do?"
+reference = """
+Audit first (read-only): which conda, `conda env list`, size of the `pkgs` cache and envs. Expanse `$HOME` is
+100 GB NFS. Fix: `conda clean --all` to empty the package cache, remove envs that aren't needed
+(`conda env remove -n <env>`, run by the user), and keep live envs in `$HOME`, not on Lustre. Commands are
+printed for the user; the agent doesn't delete anything itself.
+"""
+checklist = [
+  "Audits before advising (du / conda env list / pkgs cache size)",
+  "Recommends `conda clean` for the package cache",
+  "Suggests removing unused envs, as commands for the user to run",
+  "Does not move a live env to Lustre/scratch",
+  "Does not run destructive commands itself",
+]
+sources = ["expanse-user-guide", "hpcenv-conda-settings"]
+
+  [[questions.checks]]
+  id = "conda-clean"
+  kind = "must"
+  pattern = 'conda clean'
+
+  [[questions.checks]]
+  id = "no-env-on-lustre"
+  kind = "must_not"
+  pattern = '(create|--prefix|-p)[^\n]*(/expanse/lustre|/scratch)'
+
+[[questions]]
+id = "Q4"
+area = "conda"
+shape = "performance; Expanse facts should help"
+skills = { generic = "hpc-conda", expanse = "expanse-conda" }
+prompt = """
+To save home space I put my conda environment on Lustre scratch, and now Python imports take forever in my \
+multi-node jobs. How should I set this up instead?"""
+reference = """
+A live env is tens of thousands of small files, which is slow on Lustre and loads the metadata server; Lustre
+scratch is also purged. Keep the live env in `$HOME` (the Expanse user guide's advice). For multi-node jobs,
+`conda-pack` the env into one tarball and unpack it to node-local `/scratch/$USER/job_$SLURM_JOB_ID` at job
+start. Rebuild from an `environment.yml` rather than copying the directory.
+"""
+checklist = [
+  "Explains why (many small files, metadata load; purge)",
+  "Moves the live env off Lustre (to $HOME on Expanse)",
+  "Recommends conda-pack to node-local scratch for multi-node jobs",
+  "Rebuilds from environment.yml / export rather than copying the env dir",
+  "Gives job-script activation lines",
+]
+sources = ["expanse-user-guide", "hpcenv-conda-pack"]
+
+  [[questions.checks]]
+  id = "conda-pack"
+  kind = "must"
+  pattern = 'conda[- ]pack'
+
+  [[questions.checks]]
+  id = "node-local"
+  kind = "must"
+  pattern = 'SLURM_JOB_ID|node-local|local scratch|SLURM_TMPDIR'
+
+  [[questions.checks]]
+  id = "env-file"
+  kind = "must"
+  pattern = 'environment\.ya?ml|conda env export'
+
+[[questions]]
+id = "Q5"
+area = "conda+modules"
+shape = "broad / hard"
+skills = { generic = "hpc-conda", expanse = "expanse-conda" }
+prompt = "Install TensorFlow with the R bindings so I can use it from R."
+reference = """
+No single right answer; graded on approach. A good answer: a dedicated conda-forge env holding R, the
+`tensorflow`/`keras` R packages (`r-tensorflow`, `r-keras`, or `tensorflow::install_tensorflow()` through
+reticulate) and a matching TensorFlow, solved inside an interactive job rather than on the login node; or an
+SDSC/NGC container (the Expanse skill's first suggestion for TensorFlow). For GPU use, CUDA comes from the
+conda/pip packages, not `module load cuda`, and the build supports V100 (sm_70). Commands are printed, not run.
+"""
+checklist = [
+  "Proposes a coherent route (conda-forge env with R + TF bindings, or a container)",
+  "Installs inside an interactive job, not on the login node",
+  "Handles the GPU/CUDA question (CUDA from packages, or asks CPU vs GPU)",
+  "Uses conda-forge, not defaults",
+  "Does not run installs itself",
+]
+sources = ["expanse-user-guide", "hpcenv-condaforge-tips"]
+
+  [[questions.checks]]
+  id = "r-bindings"
+  kind = "must"
+  pattern = 'reticulate|r-tensorflow|r-keras|install_tensorflow'
+
+  [[questions.checks]]
+  id = "interactive-job"
+  kind = "must"
+  pattern = '\bsrun\b|\bsalloc\b|interactive (job|session|node)'
+
+  [[questions.checks]]
+  id = "no-sudo"
+  kind = "must_not"
+  pattern = '\bsudo\b'
