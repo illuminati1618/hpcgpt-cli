@@ -25,6 +25,7 @@ Expanse facts that skills depend on, the NRP LLM API, OpenCode skill authoring, 
 | explain SUs and allocations and read `expanse-client` | [expanse/allocations-and-sus](expanse/allocations-and-sus.md) |
 | log in, and learn login-node rules, modules and storage | [expanse/access-and-environment](expanse/access-and-environment.md) |
 | measure whether a skill works (tokens, consistency, generic vs Expanse) | [evaluation/skill-evaluation-metrics](evaluation/skill-evaluation-metrics.md) |
+| the Study 1 design: no skill vs generic vs Expanse skill (arms, questions, primary comparison) | [evaluation/study-1-protocol](evaluation/study-1-protocol.md) |
 | know which claims still need a live Expanse check | [expanse/verify-on-expanse](expanse/verify-on-expanse.md) |
 | use NRP's free LLM API from OpenCode | [nautilus-nrp/llm-api-for-opencode](nautilus-nrp/llm-api-for-opencode.md) |
 | understand NRP/Nautilus in general | [nautilus-nrp/overview](nautilus-nrp/overview.md) |
@@ -40,7 +41,7 @@ SDSC/kb/
   expanse/      access-and-environment · slurm-on-expanse · gpu-selection · allocations-and-sus · verify-on-expanse
   nautilus-nrp/ overview · llm-api-for-opencode
   opencode/     primer · skill-authoring · v1-vs-v2
-  evaluation/   skill-evaluation-metrics
+  evaluation/   skill-evaluation-metrics, study-1-protocol, study-1/ (study.toml, questions.toml)
   glossary.md
   sources/      registry.toml (every source + why) · README.md · local mirrors (generated, gitignored)
   tools/        ingest.py (mirror sources locally) · check.py (lint) · convert.py
