@@ -217,7 +217,9 @@ class Runner:
     """Runs OpenCode against a small workspace (WS) holding only the current run's pack and state.
 
     WS/cfg   the arm's pack (copied in before each run)      WS/state  XDG config/data/state of the run
-    WS/cache shared XDG cache (provider packages)             WS/work   working dir (local mode without --home)
+    WS/cache shared XDG cache (provider packages)
+
+    OpenCode starts in $HOME (the --home dir if given; the container user's home with --docker).
 
     Results, other arms' packs, earlier runs and the study files stay in OUT, outside WS, so the agent
     under test can't read them. With --docker, WS is bind-mounted into the container at --docker-ws.
@@ -233,7 +235,7 @@ class Runner:
         if self.docker and not a.docker_ws:
             sys.exit("--docker needs --docker-ws: the absolute path where WS is mounted inside the container")
         self.seen = a.docker_ws.rstrip("/") if self.docker else str(self.ws)  # WS as OpenCode sees it
-        for d in ("cfg", "state", "cache", "work"):
+        for d in ("cfg", "state", "cache"):
             (self.ws / d).mkdir(parents=True, exist_ok=True)
 
     def env(self) -> dict:
@@ -305,7 +307,7 @@ class Runner:
             env, cwd = os.environ, None
         else:
             cmd = ["timeout", "-k", "10", str(timeout), self.bin, *args]
-            env, cwd = self.local_env(), self.home or self.ws / "work"
+            env, cwd = self.local_env(), self.home or Path.home()  # start in $HOME, like a login shell
         try:
             t0 = time.time()
             r = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True,
@@ -326,7 +328,7 @@ class Runner:
             env, cwd = os.environ, None
         else:
             cmd = ["bash", "-lc", wrapped]
-            env, cwd = self.local_env(), self.home or self.ws / "work"
+            env, cwd = self.local_env(), self.home or Path.home()  # start in $HOME, like a login shell
         r = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=300,
                            stdin=subprocess.DEVNULL)
         return redact(r.stdout + r.stderr)
@@ -561,6 +563,9 @@ def cmd_score(a: argparse.Namespace) -> int:
             "auto_pass": int(bool(checks) and all(checks.values()) and meta["exit"] == 0 and bool(ev["answer"])),
             "failed_checks": ";".join(k for k, v in checks.items() if not v),
             "answer_chars": len(ev["answer"]),
+            # candidate "asked for clarification" (runs are single-turn); graders decide
+            "asks_question": int(any(ln.rstrip(" *_").endswith("?") for ln in
+                                     (lambda ls: ls[:1] + ls[-1:])(ev["answer"].strip().splitlines()))),
         }
         rows.append(row)
         (meta_path.parent / "answer.md").write_text(ev["answer"] + "\n")

@@ -171,6 +171,18 @@ One repeat of every question × arm on a laptop and in the minihpc container (30
 - The automatic checks are coarse (e.g. an arm-A answer to Q3 passed with no tool calls). Human grading stays
   the decision.
 
+## Rehearsal findings (2026-11-08, not data)
+
+One repeat of every question × arm in the minihpc container and on an Expanse login node (30 runs, all exit 0).
+
+- In the container, Q5 in arm C asked "which SDSC system are you using?" and stopped: single-turn runs can't
+  answer it, and the prompt never names the system. On Expanse the same run answered (the real environment gave
+  enough context). The prompts stay as they are: the pilot runs on Expanse, and asking is scored separately.
+- Q2 still triggers no modules skill in arms A and B; on Expanse arm C loaded `slurm` and fixed the `srun` part
+  only. Kept as a trigger-failure case; widening the skill descriptions would be a separate change to both twins.
+- Graders mark "asked for clarification" as its own outcome, separate from a wrong answer; `score` flags
+  candidates (`asks_question`: the answer's first or last line ends with `?`).
+
 ## Changes
 
 | Date | Version | Change |

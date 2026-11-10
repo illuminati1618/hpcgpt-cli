@@ -48,7 +48,7 @@ key is passed to `docker exec` by name.
 
 OpenCode runs against a small workspace (`--ws`, default `OUT/ws`) that holds only the current run: the
 arm's pack in `cfg/`, a fresh `state/` (moved into the run's `xdg/` afterwards), the shared provider cache in
-`cache/`, and `work/`. Other arms' packs, earlier runs, reference answers and scores stay outside it, so the
+and `cache/`. OpenCode starts in the home directory (the `--home` dir if given), like a login shell. Other arms' packs, earlier runs, reference answers and scores stay outside it, so the
 agent can't read them. `ws/` itself is scratch and can be deleted after a batch. Timeouts are enforced where
 OpenCode runs (`timeout` inside the container in `--docker` mode), so a timed-out run can't keep running (start the container with `--init`, so killed processes are reaped).
 
