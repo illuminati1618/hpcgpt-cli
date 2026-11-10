@@ -86,7 +86,7 @@ this only proves the plumbing.
 Rehearsals run in [minihpc](https://github.com/illuminati1618/minihpc)'s `expanse-like` profile: a Docker
 login node with Lmod and Expanse-style `cpu`/`gpu` stacks (`gcc` → `openmpi` → `gromacs`), the `slurm`
 module and its client commands (no scheduler), `cpu` + `slurm` loaded at login, and Miniforge with
-`conda init` and one env on Lustre-style scratch. (The repository is private for now; ask for access.)
+`conda init` and one env on Lustre-style scratch. (MIT licensed.)
 OpenCode is started through a login shell (`bash -lc`) in the container user's home, so the agent inherits
 the module environment, as on a login node.
 
