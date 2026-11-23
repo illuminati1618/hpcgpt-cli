@@ -16,6 +16,8 @@ Options for check-arms and run:
     --note KEY=VALUE     extra provenance for the environment record (repeatable)
     --model PROVIDER/ID  run the study on this model instead of the study's `model` (recorded in every run's
                          meta.json, the packs and the environment record; one OUT holds one model)
+    --timeout SECONDS    (run only) per-run limit instead of the study's `timeout_s` (recorded the same way;
+                         one OUT holds one limit)
 
 Everything is kept in OUT: logs/ (console log + environment record per invocation), study/ (the study and
 question files as used), packs/, check-arms/, runs/ (one dir per run, with OpenCode's own state in xdg/),
@@ -57,6 +59,7 @@ def load_study(path: Path) -> dict:
     qfile = study["_dir"] / study["study"]["questions"]
     study["_questions"] = {q["id"]: q for q in tomllib.loads(qfile.read_text())["questions"]}
     study["_model_from_study"] = study["study"]["model"]
+    study["_timeout_from_study"] = study["study"].get("timeout_s", 600)
     return study
 
 
@@ -66,6 +69,14 @@ def apply_model(study: dict, model: str | None) -> None:
         if "/" not in model:
             sys.exit(f"--model {model!r}: expected PROVIDER/ID, e.g. nrp/glm-5")
         study["study"]["model"] = model
+
+
+def apply_timeout(study: dict, timeout: int | None) -> None:
+    """--timeout: a slower model can need a longer per-run limit; everything else stays the same."""
+    if timeout is not None:
+        if timeout <= 0:
+            sys.exit(f"--timeout {timeout}: expected a positive number of seconds")
+        study["study"]["timeout_s"] = timeout
 
 
 def repo_root(start: Path) -> Path:
@@ -327,8 +338,9 @@ class Runner:
             t0 = time.time()
             r = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True,
                                timeout=timeout + 60, stdin=subprocess.DEVNULL)
-            # 124: stopped by `timeout`; 137: it ignored SIGTERM and was killed 10 s later
-            hit = r.returncode == 124 or (r.returncode == 137 and time.time() - t0 >= timeout)
+            # 124: stopped by `timeout`. If OpenCode ignored SIGTERM, `timeout` kills it 10 s later and then
+            # re-raises SIGKILL on itself: 137 through a shell (docker mode), -9 here (local mode)
+            hit = r.returncode == 124 or (r.returncode in (137, -9) and time.time() - t0 >= timeout)
             code: int | str = "timeout" if hit else r.returncode
             return redact(r.stdout), redact(r.stderr), code
         except subprocess.TimeoutExpired as e:
@@ -372,6 +384,7 @@ def record_env(a: argparse.Namespace, runner: Runner, study_path: Path, out: Pat
         "repo_status": git("status", "--porcelain"), "study_files_sha256": hashes,
         "opencode_bin": runner.bin, "opencode_version": version,
         "model": runner.model, "model_in_study": runner.model_in_study,
+        "timeout_s": runner.timeout, "timeout_in_study": runner.timeout_in_study,
         "ws": str(runner.ws), "ws_as_seen": runner.seen, "home": str(runner.home or ""),
         "notes": dict(n.split("=", 1) for n in (a.note or [])),
     }
@@ -399,17 +412,25 @@ def first_json(text: str):
 
 def prepare(a: argparse.Namespace, study: dict, out: Path, arms: list[str]) -> tuple[Runner, dict, str]:
     apply_model(study, a.model)
-    model = study["study"]["model"]
+    apply_timeout(study, getattr(a, "timeout", None))
+    model, timeout = study["study"]["model"], study["study"].get("timeout_s", 600)
     for m in sorted((out / "runs").glob("*/meta.json")) if (out / "runs").exists() else []:
-        if json.loads(m.read_text()).get("model") != model:
+        prev = json.loads(m.read_text())
+        if prev.get("model") != model:
             sys.exit(f"{out} already has runs on another model ({m.parent.name}); use a new --out per model")
+        if a.cmd == "run" and prev.get("timeout_s", study["_timeout_from_study"]) != timeout:
+            sys.exit(f"{out} already has runs with another time limit ({m.parent.name}); use a new --out")
     out.mkdir(parents=True, exist_ok=True)
     stamp = start_log(out, a.cmd)
     print(f"# {a.cmd} {stamp}: {' '.join(sys.argv)}")
     hashes = snapshot_study(study, Path(a.study), out, stamp)
     runner = Runner(a, out)
     runner.model, runner.model_in_study = model, study["_model_from_study"]
+    runner.timeout, runner.timeout_in_study = timeout, study["_timeout_from_study"]
     print(f"model: {model}" + ("" if model == study["_model_from_study"] else f" (--model; study says {study['_model_from_study']})"))
+    if a.cmd == "run":
+        print(f"timeout: {timeout} s" + ("" if timeout == study["_timeout_from_study"]
+                                         else f" (--timeout; study says {study['_timeout_from_study']} s)"))
     want = study["study"]["opencode_version"]
     got = runner.version()
     record_env(a, runner, Path(a.study), out, stamp, hashes, got)
@@ -498,6 +519,7 @@ def cmd_run(a: argparse.Namespace) -> int:
         runner.collect(rdir / "xdg")
         meta = {"run_id": run_id, "question": qid, "arm": arm, "repeat": rep, "exit": code,
                 "wall_s": round(wall, 1), "started": t0, "invocation": stamp, "model": s["model"],
+                "timeout_s": s.get("timeout_s", 600),
                 "agent": s["agent"], "opencode_version": version, "study": s["id"], "study_version": s["version"],
                 "host": socket.gethostname(), "docker": runner.docker, "provenance": packs[arm]}
         meta_path.write_text(json.dumps(meta, indent=2) + "\n")
@@ -577,7 +599,7 @@ def cmd_score(a: argparse.Namespace) -> int:
         arm_skill = {"B": expect.get("generic"), "C": expect.get("expanse")}.get(meta["arm"])
         row = {
             "run_id": meta["run_id"], "question": meta["question"], "arm": meta["arm"], "repeat": meta["repeat"],
-            "model": meta.get("model", ""), "exit": meta["exit"], "wall_s": meta["wall_s"],
+            "model": meta.get("model", ""), "timeout_s": meta.get("timeout_s", ""), "exit": meta["exit"], "wall_s": meta["wall_s"],
             **{k: ev[k] for k in ("total", "input", "output", "reasoning", "cache_read", "cache_write", "steps",
                                   "tool_calls", "denied", "tool_errors", "parse_errors")},
             "skills_loaded": ";".join(ev["skills_loaded"]),
@@ -655,6 +677,8 @@ def main() -> int:
             p.add_argument("--arms")
             p.add_argument("--questions")
             p.add_argument("--repeats", type=int)
+            p.add_argument("--timeout", type=int, metavar="SECONDS",
+                           help="per-run limit instead of the study's `timeout_s` (one OUT holds one limit)")
     p = sub.add_parser("score")
     p.add_argument("out")
     p.add_argument("--study", help="study.toml (needed for the answer checks)")

@@ -29,6 +29,10 @@ model. The questions, arms and settings stay as in `study.toml`. The model must 
 (`model`, `model_in_study`) and a `model` column in `runs.csv`. One `OUT` holds one model: `run` refuses an `OUT`
 whose runs used a different model.
 
+`run` takes `--timeout SECONDS` to change the per-run limit (the study's `timeout_s`), e.g. for a model that thinks
+longer. It is recorded the same way: `timeout_s` in every run's `meta.json` and in `runs.csv`, `timeout_s` /
+`timeout_in_study` in the environment record. One `OUT` holds one limit.
+
 Everything is kept in `OUT`, so a batch can be audited and re-graded later (including step by step from the
 full transcripts):
 
