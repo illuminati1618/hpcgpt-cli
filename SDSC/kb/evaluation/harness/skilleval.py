@@ -4,7 +4,7 @@
 Standard library only (Python 3.11+). Run from anywhere inside an hpcgpt-cli checkout.
 
     skilleval.py check-arms STUDY.toml --out OUT [--probe]     # build each arm's pack, verify its skill set
-    skilleval.py run        STUDY.toml --out OUT [--arms A,B] [--questions Q1] [--repeats 1]
+    skilleval.py run        STUDY.toml --out OUT [--arms A,B] [--questions Q1] [--repeats 1] [--model P/M]
     skilleval.py score      OUT                                 # OUT/runs.csv + OUT/summary.md
 
 Options for check-arms and run:
@@ -14,6 +14,8 @@ Options for check-arms and run:
     --docker CONTAINER   run OpenCode inside this running container via `docker exec`
     --docker-ws PATH     where --ws is bind-mounted inside that container (see README.md)
     --note KEY=VALUE     extra provenance for the environment record (repeatable)
+    --model PROVIDER/ID  run the study on this model instead of the study's `model` (recorded in every run's
+                         meta.json, the packs and the environment record; one OUT holds one model)
 
 Everything is kept in OUT: logs/ (console log + environment record per invocation), study/ (the study and
 question files as used), packs/, check-arms/, runs/ (one dir per run, with OpenCode's own state in xdg/),
@@ -54,7 +56,16 @@ def load_study(path: Path) -> dict:
     study["_dir"] = path.parent.resolve()
     qfile = study["_dir"] / study["study"]["questions"]
     study["_questions"] = {q["id"]: q for q in tomllib.loads(qfile.read_text())["questions"]}
+    study["_model_from_study"] = study["study"]["model"]
     return study
+
+
+def apply_model(study: dict, model: str | None) -> None:
+    """--model: the study (questions, arms, settings) stays the same; only the model changes."""
+    if model:
+        if "/" not in model:
+            sys.exit(f"--model {model!r}: expected PROVIDER/ID, e.g. nrp/glm-5")
+        study["study"]["model"] = model
 
 
 def repo_root(start: Path) -> Path:
@@ -101,6 +112,10 @@ def patch_config(text: str, model: str) -> str:
         if provider not in items:
             items.insert(0, provider)
         text = text[: m.start()] + '"enabled_providers": [' + ", ".join(f'"{x}"' for x in items) + "]" + text[m.end():]
+    if not re.search(rf'"{re.escape(provider)}"\s*:\s*\{{', text):
+        sys.exit(f"provider {provider!r} of model {model!r} is not defined in opencode.jsonc")
+    if not re.search(rf'"{re.escape(model.split("/", 1)[1])}"\s*:\s*\{{', text):
+        sys.exit(f"model {model!r} is not defined in opencode.jsonc (check the provider's `models`)")
     text, n = re.subn(r'(^\s*"model"\s*:\s*)"[^"]*"', rf'\1"{model}"', text, count=1, flags=re.M)
     if n != 1:
         sys.exit('could not find top-level "model" in opencode.jsonc')
@@ -126,7 +141,7 @@ def build_pack(study: dict, arm: str, dest: Path) -> dict:
     for d in list(skills_dir.iterdir()):
         if d.is_dir() and d.name not in keep:
             shutil.rmtree(d)
-    prov = {"arm": arm, "base_sha": base_sha, "skills": {}}
+    prov = {"arm": arm, "model": s["model"], "base_sha": base_sha, "skills": {}}
     for name in sorted(keep):
         if not (skills_dir / name / "SKILL.md").exists():
             sys.exit(f"base skill {name} not found at {s['base_ref']}")
@@ -356,6 +371,7 @@ def record_env(a: argparse.Namespace, runner: Runner, study_path: Path, out: Pat
         "repo_head": git("rev-parse", "HEAD"), "repo_branch": git("rev-parse", "--abbrev-ref", "HEAD"),
         "repo_status": git("status", "--porcelain"), "study_files_sha256": hashes,
         "opencode_bin": runner.bin, "opencode_version": version,
+        "model": runner.model, "model_in_study": runner.model_in_study,
         "ws": str(runner.ws), "ws_as_seen": runner.seen, "home": str(runner.home or ""),
         "notes": dict(n.split("=", 1) for n in (a.note or [])),
     }
@@ -382,11 +398,18 @@ def first_json(text: str):
 
 
 def prepare(a: argparse.Namespace, study: dict, out: Path, arms: list[str]) -> tuple[Runner, dict, str]:
+    apply_model(study, a.model)
+    model = study["study"]["model"]
+    for m in sorted((out / "runs").glob("*/meta.json")) if (out / "runs").exists() else []:
+        if json.loads(m.read_text()).get("model") != model:
+            sys.exit(f"{out} already has runs on another model ({m.parent.name}); use a new --out per model")
     out.mkdir(parents=True, exist_ok=True)
     stamp = start_log(out, a.cmd)
     print(f"# {a.cmd} {stamp}: {' '.join(sys.argv)}")
     hashes = snapshot_study(study, Path(a.study), out, stamp)
     runner = Runner(a, out)
+    runner.model, runner.model_in_study = model, study["_model_from_study"]
+    print(f"model: {model}" + ("" if model == study["_model_from_study"] else f" (--model; study says {study['_model_from_study']})"))
     want = study["study"]["opencode_version"]
     got = runner.version()
     record_env(a, runner, Path(a.study), out, stamp, hashes, got)
@@ -554,7 +577,7 @@ def cmd_score(a: argparse.Namespace) -> int:
         arm_skill = {"B": expect.get("generic"), "C": expect.get("expanse")}.get(meta["arm"])
         row = {
             "run_id": meta["run_id"], "question": meta["question"], "arm": meta["arm"], "repeat": meta["repeat"],
-            "exit": meta["exit"], "wall_s": meta["wall_s"],
+            "model": meta.get("model", ""), "exit": meta["exit"], "wall_s": meta["wall_s"],
             **{k: ev[k] for k in ("total", "input", "output", "reasoning", "cache_read", "cache_write", "steps",
                                   "tool_calls", "denied", "tool_errors", "parse_errors")},
             "skills_loaded": ";".join(ev["skills_loaded"]),
@@ -590,6 +613,7 @@ def cmd_score(a: argparse.Namespace) -> int:
     head = ("| runs | auto-pass | median tokens | tokens per auto-pass | mean steps | mean tool calls | denied | "
             "expected skill loaded |\n|---|---|---|---|---|---|---|---|")
     lines = ["# Results (provisional auto-checks; human grading decides pass/fail)", "",
+             "Model: " + ", ".join(f"`{m}`" for m in sorted({r["model"] for r in rows})), "",
              "## By arm", "", "| arm " + head.replace("\n|", "\n|---|", 1)]
     for arm in sorted({r["arm"] for r in rows}):
         lines.append(f"| {arm} " + agg([r for r in rows if r["arm"] == arm]))
@@ -623,6 +647,8 @@ def main() -> int:
         p.add_argument("--docker-ws", help="where --ws is mounted inside the container (absolute path)")
         p.add_argument("--note", action="append", metavar="KEY=VALUE",
                        help="extra provenance for the environment record (repeatable)")
+        p.add_argument("--model", metavar="PROVIDER/ID",
+                       help="run on this model instead of the study's `model` (one OUT holds one model)")
         if name == "check-arms":
             p.add_argument("--probe", action="store_true", help="also send 'Reply with just OK.' per arm")
         else:

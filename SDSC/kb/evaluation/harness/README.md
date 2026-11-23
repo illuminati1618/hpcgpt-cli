@@ -23,6 +23,12 @@ skilleval.py run        STUDY.toml --out OUT [--arms A,B] [--questions Q1,Q2] [-
 skilleval.py score      OUT --study STUDY.toml            # OUT/runs.csv, OUT/summary.md, runs/*/answer.md
 ```
 
+`check-arms` and `run` take `--model PROVIDER/ID` (e.g. `--model nrp/glm-5`) to run the same study on another
+model. The questions, arms and settings stay as in `study.toml`. The model must be defined in the pack's
+`opencode.jsonc`. It is recorded in every run's `meta.json`, each pack's `PROVENANCE.json`, the environment record
+(`model`, `model_in_study`) and a `model` column in `runs.csv`. One `OUT` holds one model: `run` refuses an `OUT`
+whose runs used a different model.
+
 Everything is kept in `OUT`, so a batch can be audited and re-graded later (including step by step from the
 full transcripts):
 
@@ -57,7 +63,7 @@ OpenCode runs (`timeout` inside the container in `--docker` mode), so a timed-ou
 `SDSC/` at the study's `base_ref` (via `git archive`, so uncommitted edits never leak in), with:
 
 - `skills/` reduced to `base_skills` plus the arm's skills, each extracted from its own pinned commit;
-- the study's model as the default (`model`, `enabled_providers`, and the agent file's `model:`);
+- the study's model (or `--model`) as the default (`model`, `enabled_providers`, and the agent file's `model:`);
 - the agent file's `bash: ask` replaced by the study's bash policy (headless runs auto-reject `ask`).
 
 Runs use `--agent hpcGPT`: without it OpenCode selects a bare agent with no SDSC prompt
